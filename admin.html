@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+  <title>PANDAWA — Pendaftaran dan Data Warga Belajar</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Pustaka: Excel & PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- ============================================================
+     IKON SVG (sprite) — dipakai ulang lewat <use>
+     ============================================================ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+    <rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
+  </symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+  </symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+  </symbol>
+  <symbol id="i-cap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/>
+  </symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+  </symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+  </symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+  </symbol>
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+  </symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+    <polyline points="22,6 12,13 2,6"/>
+  </symbol>
+  <symbol id="i-user-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+    <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+  </symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+  </symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+  </symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+  </symbol>
+  <symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+  </symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 9 12 15 18 9"/>
+  </symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+  </symbol>
+</svg>
+
+<!-- ============================================================
+     LAYAR LOGIN
+     ============================================================ -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <img id="loginLogo" class="login-logo" src="" alt="Logo Sekolah" style="display:none;">
+    <div class="login-badge" id="loginBadge">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/>
+      </svg>
+    </div>
+
+    <h1>PANDAWA</h1>
+    <div class="login-tagline">Pendaftaran dan Data Warga Belajar</div>
+    <div class="login-school" id="loginSchool">&nbsp;</div>
+    <p>Masuk dengan akun admin untuk mengelola data.</p>
+
+    <div class="msg err" id="loginMsg"></div>
+
+    <div class="field">
+      <label for="usernameInput">Username</label>
+      <input type="text" id="usernameInput" placeholder="admin" autocomplete="username" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="passwordInput">Password</label>
+      <div class="input-pass">
+        <input type="password" id="passwordInput" placeholder="••••••" autocomplete="current-password">
+        <button type="button" class="eye-btn" data-target="passwordInput" aria-label="Tampilkan password">
+          <svg class="ic-show"><use href="#i-eye"/></svg>
+          <svg class="ic-hide" style="display:none;"><use href="#i-eye-off"/></svg>
+        </button>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" id="loginBtn">Masuk</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     APLIKASI (SPA)
+     ============================================================ -->
+<div class="app" id="app">
+<div class="layout">
+
+  <!-- ---------- SIDEBAR ---------- -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="brand-mark" id="brandMark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title" id="brandTitle">PANDAWA</div>
+        <div class="brand-sub" id="brandSub">Data Warga Belajar</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Menu Utama</div>
+      <button class="nav-item active" data-page="dashboard">
+        <svg><use href="#i-grid"/></svg> Dashboard
+      </button>
+      <button class="nav-item" data-page="pendaftar">
+        <svg><use href="#i-users"/></svg> Data Pendaftar
+        <span class="nav-badge" id="badgePendaftar">0</span>
+      </button>
+      <button class="nav-item" data-page="rombel">
+        <svg><use href="#i-layers"/></svg> Rombel
+      </button>
+      <button class="nav-item" data-page="lulus">
+        <svg><use href="#i-cap"/></svg> Peserta Lulus
+      </button>
+
+      <div class="nav-label">Sistem</div>
+      <button class="nav-item" data-page="pengaturan">
+        <svg><use href="#i-settings"/></svg> Pengaturan
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="avatar">AD</div>
+        <div style="min-width:0;flex:1;">
+          <div class="user-name" id="userName">Administrator</div>
+          <div class="user-role" id="userRole">Sesi aktif</div>
+        </div>
+        <button class="icon-btn" id="logoutBtn" title="Keluar" aria-label="Keluar" style="width:34px;height:34px;">
+          <svg><use href="#i-logout"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- ---------- KONTEN ---------- -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Buka menu">
+        <svg><use href="#i-menu"/></svg>
+      </button>
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+        <div class="page-sub" id="pageSub">Ringkasan data pendaftaran</div>
+      </div>
+      <div class="topbar-spacer"></div>
+
+      <span class="sync-dot" id="syncDot"><i></i> Menyinkronkan…</span>
+
+      <button class="icon-btn" id="refreshBtn" title="Muat ulang data" aria-label="Muat ulang data">
+        <svg><use href="#i-refresh"/></svg>
+      </button>
+      <button class="icon-btn" id="themeBtn" title="Ganti tema" aria-label="Ganti tema terang/gelap">
+        <svg id="themeIcon"><use href="#i-moon"/></svg>
+      </button>
+    </header>
+
+    <main class="content">
+
+      <!-- ========== HALAMAN: DASHBOARD ========== -->
+      <section class="page active" id="page-dashboard">
+        <div style="margin-bottom:var(--sp-4);" id="filterDashboardWrap"></div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="grid-2" id="breakdownGrid"></div>
+      </section>
+
+      <!-- ========== HALAMAN: DATA PENDAFTAR ========== -->
+      <section class="page" id="page-pendaftar">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg><use href="#i-search"/></svg>
+            <input type="text" id="searchPendaftar" placeholder="Cari nama, NIK, atau NISN…" autocomplete="off">
+          </div>
+          <div id="filterPendaftarWrap"></div>
+          <button class="btn btn-ghost" id="exportPendaftarBtn">
+            <svg width="16" height="16"><use href="#i-download"/></svg> Excel
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table id="tablePendaftar">
+            <thead>
+              <tr>
+                <th>Waktu Kirim</th><th>Nama Lengkap</th><th>L/P</th>
+                <th>Paket</th><th>NISN</th><th>No HP</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="bodyPendaftar"></tbody>
+          </table>
+          <div id="emptyPendaftar"></div>
+        </div>
+      </section>
+
+      <!-- ========== HALAMAN: ROMBEL ========== -->
+      <section class="page" id="page-rombel">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg><use href="#i-search"/></svg>
+            <input type="text" id="searchRombel" placeholder="Cari nama, NIK, atau NISN…" autocomplete="off">
+          </div>
+        </div>
+        <div id="rombelContent"></div>
+      </section>
+
+      <!-- ========== HALAMAN: PESERTA LULUS ========== -->
+      <section class="page" id="page-lulus">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg><use href="#i-search"/></svg>
+            <input type="text" id="searchLulus" placeholder="Cari nama, NIK, atau NISN…" autocomplete="off">
+          </div>
+        </div>
+        <div id="lulusContent"></div>
+      </section>
+
+      <!-- ========== HALAMAN: PENGATURAN ========== -->
+      <section class="page" id="page-pengaturan">
+        <div class="subtabs">
+          <button class="subtab-btn active" data-sub="sekolah">Sekolah &amp; Admin</button>
+          <button class="subtab-btn" data-sub="rombel">Rombel</button>
+        </div>
+
+        <!-- Sub-halaman: Sekolah & Admin -->
+        <div class="subpage active" id="sub-sekolah">
+          <div class="settings-layout">
+
+            <!-- ================= KOLOM KIRI ================= -->
+            <div class="settings-col">
+
+              <!-- Identitas + Logo -->
+              <section class="scard">
+                <header class="scard-head">
+                  <div class="scard-ic violet"><svg><use href="#i-cap"/></svg></div>
+                  <div>
+                    <h3 class="scard-title">Identitas Satuan Pendidikan</h3>
+                    <p class="scard-desc">Tampil di judul formulir, dashboard, dan dokumen PDF.</p>
+                  </div>
+                </header>
+
+                <div class="scard-body">
+                  <div class="msg" id="msgLogo"></div>
+                  <div class="logo-row">
+                    <div class="logo-preview" id="logoPreview"><span>Belum ada logo</span></div>
+                    <div class="logo-info">
+                      <div class="logo-title">Logo Sekolah</div>
+                      <div class="hint" style="margin:2px 0 10px;">PNG, JPG, SVG, atau WebP &middot; maksimal 250 KB</div>
+                      <div class="logo-actions">
+                        <label class="btn btn-ghost btn-sm file-pick">
+                          <svg width="14" height="14"><use href="#i-file"/></svg>
+                          <span id="logoFileName">Pilih Gambar</span>
+                          <input type="file" id="logoFile" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+                        </label>
+                        <button class="btn btn-primary btn-sm" id="uploadLogoBtn">Upload Logo</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="divider"></div>
+
+                  <div class="msg" id="msgPengaturan"></div>
+                  <div class="field">
+                    <label for="inputNamaSekolah">Nama Satuan Pendidikan</label>
+                    <input type="text" id="inputNamaSekolah" placeholder="Contoh: PKBM Tunas Bangsa">
+                  </div>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="inputJenisSatuan">Jenis Satuan</label>
+                      <select id="inputJenisSatuan">
+                        <option value="PKBM">PKBM</option>
+                        <option value="SKB">SKB</option>
+                        <option value="LKP">LKP</option>
+                        <option value="SPNF">SPNF</option>
+                        <option value="Lainnya">Lainnya</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="inputTahunAjaran">Tahun Ajaran</label>
+                      <input type="text" id="inputTahunAjaran" placeholder="2026-2027">
+                    </div>
+                  </div>
+                </div>
+
+                <footer class="scard-foot">
+                  <button class="btn btn-primary" id="saveSettingsBtn">Simpan Pengaturan</button>
+                </footer>
+              </section>
+
+              <!-- Akun Admin -->
+              <section class="scard">
+                <header class="scard-head">
+                  <div class="scard-ic blue"><svg><use href="#i-user"/></svg></div>
+                  <div>
+                    <h3 class="scard-title">Akun Admin</h3>
+                    <p class="scard-desc">Dipakai untuk masuk ke PANDAWA.</p>
+                  </div>
+                </header>
+
+                <div class="scard-body">
+                  <div class="msg" id="msgPassword"></div>
+                  <div class="field">
+                    <label for="inputUserBaru">Username</label>
+                    <input type="text" id="inputUserBaru" placeholder="admin" autocapitalize="none" spellcheck="false">
+                  </div>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="inputPassBaru">Password Baru</label>
+                      <div class="input-pass">
+                        <input type="password" id="inputPassBaru" placeholder="Kosongkan bila tetap">
+                        <button type="button" class="eye-btn" data-target="inputPassBaru" aria-label="Tampilkan password">
+                          <svg class="ic-show"><use href="#i-eye"/></svg>
+                          <svg class="ic-hide" style="display:none;"><use href="#i-eye-off"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label for="inputPassKonfirmasi">Konfirmasi Password</label>
+                      <div class="input-pass">
+                        <input type="password" id="inputPassKonfirmasi" placeholder="Ulangi password">
+                        <button type="button" class="eye-btn" data-target="inputPassKonfirmasi" aria-label="Tampilkan password">
+                          <svg class="ic-show"><use href="#i-eye"/></svg>
+                          <svg class="ic-hide" style="display:none;"><use href="#i-eye-off"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="hint" style="margin-top:-6px;">Minimal 4 karakter. Kosongkan password bila hanya mengubah username.</div>
+                </div>
+
+                <footer class="scard-foot">
+                  <button class="btn btn-primary" id="changePassBtn">Simpan Akun</button>
+                </footer>
+              </section>
+            </div>
+
+            <!-- ================= KOLOM KANAN ================= -->
+            <div class="settings-col">
+
+              <!-- Status Pendaftaran -->
+              <section class="scard">
+                <header class="scard-head">
+                  <div class="scard-ic teal"><svg><use href="#i-users"/></svg></div>
+                  <div>
+                    <h3 class="scard-title">Status Pendaftaran</h3>
+                    <p class="scard-desc">Buka atau tutup pengisian formulir.</p>
+                  </div>
+                </header>
+
+                <div class="scard-body">
+                  <div class="msg" id="msgStatus"></div>
+                  <div class="status-toggle-row">
+                    <div style="flex:1;min-width:0;">
+                      <div class="status-label" id="statusLabel">Memuat…</div>
+                      <div class="hint" id="statusKet" style="margin-top:2px;">&nbsp;</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="switchPendaftaran">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <div class="field" style="margin-top:var(--sp-4);margin-bottom:0;">
+                    <label for="inputPesanTutup">Pesan saat ditutup</label>
+                    <textarea id="inputPesanTutup" rows="3" placeholder="Mohon maaf, pendaftaran sedang ditutup."></textarea>
+                    <div class="hint">Ditampilkan di halaman formulir saat pendaftaran ditutup.</div>
+                  </div>
+                </div>
+
+                <footer class="scard-foot">
+                  <button class="btn btn-primary" id="saveStatusBtn">Simpan Status</button>
+                </footer>
+              </section>
+
+              <!-- Notifikasi Email -->
+              <section class="scard">
+                <header class="scard-head">
+                  <div class="scard-ic violet"><svg><use href="#i-mail"/></svg></div>
+                  <div>
+                    <h3 class="scard-title">Notifikasi Email</h3>
+                    <p class="scard-desc">Kirim email setiap ada pendaftar baru.</p>
+                  </div>
+                </header>
+
+                <div class="scard-body">
+                  <div class="msg" id="msgNotif"></div>
+                  <div class="status-toggle-row">
+                    <div style="flex:1;min-width:0;">
+                      <div class="status-label" id="notifLabel">Memuat…</div>
+                      <div class="hint" id="notifKet" style="margin-top:2px;">&nbsp;</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="switchNotif">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="field" style="margin-top:var(--sp-4);">
+                    <label for="inputEmail1">Email Penerima 1</label>
+                    <input type="email" id="inputEmail1" placeholder="nama@gmail.com" autocapitalize="none" spellcheck="false">
+                  </div>
+                  <div class="field">
+                    <label for="inputEmail2">Email Penerima 2 <span class="hint" style="font-weight:500;">(opsional)</span></label>
+                    <input type="email" id="inputEmail2" placeholder="nama@gmail.com" autocapitalize="none" spellcheck="false">
+                  </div>
+                </div>
+
+                <footer class="scard-foot">
+                  <button class="btn btn-ghost" id="testEmailBtn">Kirim Uji Coba</button>
+                  <button class="btn btn-primary" id="saveNotifBtn">Simpan</button>
+                </footer>
+              </section>
+
+              <!-- Bagikan Formulir -->
+              <section class="scard">
+                <header class="scard-head">
+                  <div class="scard-ic pink"><svg><use href="#i-share"/></svg></div>
+                  <div>
+                    <h3 class="scard-title">Bagikan Formulir</h3>
+                    <p class="scard-desc">Tautan langsung ke halaman pendaftaran.</p>
+                  </div>
+                </header>
+
+                <div class="scard-body">
+                  <div class="msg" id="msgShare"></div>
+                  <div class="link-box">
+                    <input type="text" id="linkPendaftaran" readonly onclick="this.select();">
+                  </div>
+                </div>
+
+                <footer class="scard-foot">
+                  <a class="btn btn-ghost" id="bukaFormulirBtn" href="#" target="_top" rel="noopener">Buka</a>
+                  <button class="btn btn-primary" id="shareBtn">
+                    <svg width="15" height="15"><use href="#i-share"/></svg> Salin Tautan
+                  </button>
+                </footer>
+              </section>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Sub-halaman: Rombel -->
+        <div class="subpage" id="sub-rombel">
+          <div class="settings-layout">
+
+            <section class="scard">
+              <header class="scard-head">
+                <div class="scard-ic violet"><svg><use href="#i-layers"/></svg></div>
+                <div>
+                  <h3 class="scard-title">Tambah Rombel</h3>
+                  <p class="scard-desc">Nama rombel dibuat otomatis dari jenjang dan kelas.</p>
+                </div>
+              </header>
+
+              <div class="scard-body">
+                <div class="msg" id="msgRombel"></div>
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="inputJenjang">Jenjang</label>
+                    <select id="inputJenjang">
+                      <option value="">— Pilih Jenjang —</option>
+                      <option value="Paket A">Paket A</option>
+                      <option value="Paket B">Paket B</option>
+                      <option value="Paket C">Paket C</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="inputKelas">Kelas</label>
+                    <select id="inputKelas" disabled>
+                      <option value="">— Pilih Jenjang dahulu —</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="inputNamaRombel">Nama Rombel</label>
+                  <input type="text" id="inputNamaRombel" disabled placeholder="Otomatis terisi">
+                </div>
+                <div class="field">
+                  <label for="inputWaliGuru">Wali/Guru Kelas</label>
+                  <input type="text" id="inputWaliGuru" placeholder="Nama wali/guru kelas">
+                </div>
+              </div>
+
+              <footer class="scard-foot">
+                <button class="btn btn-primary" id="addRombelBtn">Tambah Rombel</button>
+              </footer>
+            </section>
+
+            <section class="scard">
+              <header class="scard-head">
+                <div class="scard-ic teal"><svg><use href="#i-users"/></svg></div>
+                <div>
+                  <h3 class="scard-title">Daftar Rombel</h3>
+                  <p class="scard-desc">Rombel hanya bisa dihapus bila tidak ada peserta di dalamnya.</p>
+                </div>
+              </header>
+              <div class="scard-body" style="padding-top:var(--sp-2);padding-bottom:var(--sp-2);">
+                <div id="rombelList"></div>
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETAIL PENDAFTAR
+     ============================================================ -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="detailNama">Detail Pendaftar</h3>
+      <button class="icon-btn" data-close="detailModal" aria-label="Tutup" style="width:34px;height:34px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-view="semua">Semua</button>
+      <button class="modal-tab" data-view="dapodik">Dapodik</button>
+      <button class="modal-tab" data-view="non_dapodik">Non Dapodik</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: REGISTER PESERTA
+     ============================================================ -->
+<div class="modal-overlay" id="registerModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Register: <span id="registerNama"></span></h3>
+      <button class="icon-btn" data-close="registerModal" aria-label="Tutup" style="width:34px;height:34px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="choice-row" id="choiceRow">
+        <button class="choice-btn active" id="choiceRombel">Masukan Rombel</button>
+        <button class="choice-btn" id="choiceKendala">Kendala</button>
+        <button class="choice-btn" id="choiceLulus">Lulus</button>
+      </div>
+
+      <div id="sectionRombel">
+        <div class="msg err" id="warnKendala">
+          Peserta ini masih memiliki kendala yang belum diselesaikan. Selesaikan kendalanya
+          terlebih dahulu sebelum memasukkan ke rombel.
+        </div>
+        <div class="field">
+          <label for="selectRombel">Pilih Rombel</label>
+          <select id="selectRombel"></select>
+        </div>
+        <button class="btn btn-primary btn-block" id="saveRombelBtn">Simpan Rombel</button>
+      </div>
+
+      <div id="sectionKendala" style="display:none;"></div>
+      <div id="sectionLulus" style="display:none;"></div>
+
+      <div class="msg" id="msgRegister" style="margin-top:var(--sp-4);margin-bottom:0;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: PRATINJAU BERKAS
+     ============================================================ -->
+<div class="modal-overlay" id="berkasModal">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3 id="berkasJudul">Pratinjau Berkas</h3>
+      <a class="btn btn-ghost btn-sm" id="berkasBukaTab" href="#" target="_blank" rel="noopener">
+        Buka di tab baru
+      </a>
+      <button class="icon-btn" data-close="berkasModal" aria-label="Tutup" style="width:34px;height:34px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body berkas-body" id="berkasBody"></div>
+  </div>
+</div>
+
+<!-- Menu Aksi melayang (dipasang di luar tabel agar tidak terpotong) -->
+<div class="aksi-menu" id="aksiMenu"></div>
+
+<!-- Wadah notifikasi -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

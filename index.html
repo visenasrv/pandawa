@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulir Pendaftaran</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/form.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div class="letterhead">
+  <img id="pkbmLogo" src="" alt="Logo Sekolah" style="display:none;max-width:70px;max-height:70px;margin:0 auto 12px;">
+  <h1>Formulir Pendaftaran<br><span id="namaPkbmText"></span><br><span class="tahun-ajaran">Tahun Ajaran <span id="tahunAjaranText"></span></span></h1>
+  <p>Lengkapi seluruh data di bawah ini dengan benar dan sesuai dokumen resmi (KK / Ijazah / Akta Kelahiran).</p>
+</div>
+
+<div class="wrap">
+
+  <div class="progress-card" style="display:none;">
+    <div class="progress-steps" id="progressSteps">
+      <div class="pstep active" data-step="0"><span>Pendaftaran</span></div>
+      <div class="pstep" data-step="1"><span>Data Pribadi</span></div>
+      <div class="pstep" data-step="2"><span>Ayah</span></div>
+      <div class="pstep" data-step="3"><span>Ibu</span></div>
+      <div class="pstep" data-step="4"><span>Wali</span></div>
+      <div class="pstep" data-step="5"><span>Kontak</span></div>
+      <div class="pstep" data-step="6"><span>Periodik</span></div>
+    </div>
+  </div>
+
+  <div class="form-summary-err" id="summaryErr">Beberapa isian belum lengkap atau belum sesuai format. Silakan periksa kembali kolom yang ditandai merah.</div>
+
+  <form id="ppdbForm" novalidate style="display:none;">
+
+    <!-- SECTION: PENDAFTARAN -->
+    <section class="card">
+      <div class="card-head"><span class="card-title">Pendaftaran</span></div>
+
+      <div class="field">
+        <label>Pendaftaran<span class="req">*</span></label>
+        <select id="pendaftaran" required></select>
+        <div class="err-msg">Silakan pilih jenis pendaftaran.</div>
+      </div>
+
+      <div class="field">
+        <label>Apakah Pernah Putus Sekolah<span class="req">*</span></label>
+        <div class="hint" style="margin-top:-2px;margin-bottom:8px;">Pernah sekolah SD/SMP/SMA tapi berhenti/keluar</div>
+        <div class="status-toggle" data-target="putus_sekolah">
+          <button type="button" data-value="Tidak" class="selected">Tidak</button>
+          <button type="button" data-value="Iya">Iya</button>
+        </div>
+        <input type="hidden" id="putus_sekolah" value="Tidak">
+      </div>
+
+      <div id="alamatSekolahSection">
+        <div class="subsection-title">Alamat Sekolah Asal</div>
+        <div class="notice-desc" id="alamatSekolahDesc">Masukan alamat sekolah sesuai ijazah terakhir</div>
+
+        <div class="field">
+          <label>Provinsi Sekolah<span class="req">*</span></label>
+          <select id="provinsi_sekolah_asal" required></select>
+          <div class="err-msg">Provinsi wajib diisi.</div>
+        </div>
+        <div class="field">
+          <label>Kabupaten / Kota Sekolah<span class="req">*</span></label>
+          <select id="kabupaten_sekolah_asal" required disabled></select>
+          <div class="hint" id="kabupatenHint">Pilih Provinsi terlebih dahulu</div>
+          <div class="err-msg">Kabupaten/Kota wajib diisi.</div>
+        </div>
+        <div class="field">
+          <label>Kecamatan Sekolah<span class="req">*</span></label>
+          <input type="text" id="kecamatan_sekolah_asal" required>
+          <div class="err-msg">Kecamatan wajib diisi.</div>
+        </div>
+        <div class="field">
+          <label>Nama Sekolah<span class="req">*</span></label>
+          <input type="text" id="nama_sekolah_asal" required>
+          <div class="err-msg">Nama sekolah wajib diisi.</div>
+        </div>
+        <div class="field">
+          <label>Lulus Tahun<span class="req">*</span></label>
+          <input type="text" id="lulus_tahun" inputmode="numeric" maxlength="4" placeholder="Contoh: 2024" required>
+          <div class="err-msg">Lulus tahun harus 4 digit angka.</div>
+        </div>
+      </div>
+
+      <div class="subsection-title">Upload Berkas</div>
+
+      <div class="field">
+        <label>Upload Kartu Keluarga (KK)<span class="req">*</span></label>
+        <input type="file" id="kk_file" accept="application/pdf,image/jpeg,image/jpg" required>
+        <div class="hint">Format PDF atau JPG, ukuran maksimal 2 MB.</div>
+        <div class="err-msg" id="kkFileErr">Berkas KK wajib diunggah (PDF/JPG, maksimal 2 MB).</div>
+      </div>
+
+      <div class="field">
+        <label>Upload Ijazah Terakhir<span class="req" id="ijazahReqMark" style="display:none;">*</span></label>
+        <input type="file" id="ijazah_file" accept="application/pdf,image/jpeg,image/jpg">
+        <div class="hint" id="ijazahHint">Format PDF atau JPG, ukuran maksimal 2 MB. Opsional untuk Paket A, wajib untuk Paket B dan Paket C.</div>
+        <div class="err-msg" id="ijazahFileErr">Berkas Ijazah Terakhir wajib diunggah untuk Paket B/C (PDF/JPG, maksimal 2 MB).</div>
+      </div>
+    </section>
+
+    <!-- SECTION I: DATA PRIBADI -->
+    <section class="card">
+      <div class="card-head"><span class="card-title">Data Pribadi</span></div>
+
+      <div class="field">
+        <label>Nama Lengkap<span class="req">*</span></label>
+        <input type="text" id="nama_lengkap" placeholder="Harus sesuai KK / Ijazah Terakhir" required>
+        <div class="err-msg">Nama lengkap wajib diisi.</div>
+      </div>
+
+      <div class="field">
+        <label>Jenis Kelamin<span class="req">*</span></label>
+        <select id="jenis_kelamin" required></select>
+        <div class="err-msg">Silakan pilih jenis kelamin.</div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>NISN</label>
+          <input type="text" id="nisn" inputmode="numeric" maxlength="10" placeholder="10 digit Nomor Induk Siswa Nasional (jika ada)">
+          <div class="err-msg">NISN harus tepat 10 digit angka.</div>
+        </div>
+        <div class="field">
+          <label>NIK<span class="req">*</span></label>
+          <input type="text" id="nik" inputmode="numeric" maxlength="16" placeholder="16 digit angka sesuai KTP/KK" required>
+          <div class="err-msg">NIK harus tepat 16 digit angka.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>No. KK</label>
+        <input type="text" id="no_kk" inputmode="numeric" maxlength="16" placeholder="Nomor Kartu Keluarga">
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Tempat Lahir<span class="req">*</span></label>
+          <input type="text" id="tempat_lahir" placeholder="Contoh: Bengalon" required>
+          <div class="err-msg">Tempat lahir hanya boleh berisi huruf.</div>
+        </div>
+        <div class="field">
+          <label>Tanggal Lahir<span class="req">*</span></label>
+          <input type="date" id="tanggal_lahir" required>
+          <div class="err-msg">Tanggal lahir wajib diisi.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>No Registrasi Akta Lahir</label>
+        <input type="text" id="no_akta" inputmode="numeric" maxlength="16" placeholder="16 digit angka sesuai Akta Kelahiran">
+        <div class="err-msg">Nomor akta harus tepat 16 digit angka.</div>
+      </div>
+
+      <div class="field">
+        <label>Berkebutuhan Khusus</label>
+        <select id="kebutuhan_khusus"></select>
+      </div>
+
+      <div class="field">
+        <label>Agama & Kepercayaan<span class="req">*</span></label>
+        <select id="agama" required></select>
+        <div class="err-msg">Silakan pilih agama & kepercayaan.</div>
+      </div>
+
+      <div class="field">
+        <label>Alamat Jalan<span class="req">*</span></label>
+        <input type="text" id="alamat_jalan" placeholder="Nama jalan / alamat lengkap" required>
+        <div class="err-msg">Alamat wajib diisi.</div>
+        <div class="notice-desc">Isi alamat sesuai dengan yang ada di Kartu Keluarga</div>
+      </div>
+
+      <div class="row3">
+        <div class="field">
+          <label>RT</label>
+          <input type="text" id="rt" inputmode="numeric" placeholder="RT">
+        </div>
+        <div class="field">
+          <label>RW</label>
+          <input type="text" id="rw" inputmode="numeric" placeholder="RW">
+        </div>
+        <div class="field">
+          <label>Kode Pos</label>
+          <input type="text" id="kode_pos" inputmode="numeric" placeholder="Kode Pos">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Nama Dusun</label>
+          <input type="text" id="nama_dusun" placeholder="Nama dusun (jika ada)">
+        </div>
+        <div class="field">
+          <label>Desa/Kelurahan<span class="req">*</span></label>
+          <input type="text" id="desa_kelurahan" placeholder="Desa / Kelurahan" required>
+          <div class="err-msg">Desa/Kelurahan wajib diisi.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Provinsi<span class="req">*</span></label>
+        <select id="provinsi_domisili" required></select>
+        <div class="err-msg">Provinsi wajib diisi.</div>
+      </div>
+
+      <div class="field">
+        <label>Kabupaten / Kota<span class="req">*</span></label>
+        <select id="kabupaten_domisili" required disabled></select>
+        <div class="hint" id="kabupatenDomisiliHint">Pilih Provinsi terlebih dahulu</div>
+        <div class="err-msg">Kabupaten/Kota wajib diisi.</div>
+      </div>
+
+      <div class="field">
+        <label>Kecamatan<span class="req">*</span></label>
+        <input type="text" id="kecamatan_domisili" placeholder="Kecamatan" required>
+        <div class="err-msg">Kecamatan wajib diisi.</div>
+      </div>
+
+      <div class="field">
+        <label>Tempat Tinggal<span class="req">*</span></label>
+        <select id="tempat_tinggal" required></select>
+        <div class="err-msg">Silakan pilih tempat tinggal.</div>
+      </div>
+
+      <div class="field">
+        <label>Moda Transportasi<span class="req">*</span></label>
+        <select id="moda_transportasi" required></select>
+        <div class="err-msg">Silakan pilih moda transportasi.</div>
+      </div>
+
+      <div class="field">
+        <label>Anak Ke-berapa (berdasarkan KK)<span class="req">*</span></label>
+        <input type="text" id="anak_ke" inputmode="numeric" placeholder="Contoh: 1" required>
+        <div class="err-msg">Isian harus berupa angka.</div>
+      </div>
+    </section>
+
+    <!-- SECTION: DATA AYAH -->
+    <section class="card">
+      <div class="card-head"><span class="card-title">Data Ayah Kandung</span></div>
+
+      <div class="field">
+        <label>Status Ayah</label>
+        <div class="status-toggle" data-target="status_ayah">
+          <button type="button" data-value="Hidup" class="selected">Hidup</button>
+          <button type="button" data-value="Wafat">Wafat</button>
+        </div>
+        <input type="hidden" id="status_ayah" value="Hidup">
+      </div>
+
+      <div class="locked-note" id="ayahLockedNote">Karena status Ayah "Wafat", Pekerjaan otomatis diisi "Sudah Meninggal" dan Penghasilan otomatis diisi "Tidak Berpenghasilan".</div>
+
+      <div class="field">
+        <label>Nama Ayah<span class="req">*</span></label>
+        <input type="text" id="nama_ayah" required>
+        <div class="err-msg">Nama Ayah wajib diisi.</div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>NIK Ayah</label>
+          <input type="text" id="nik_ayah" inputmode="numeric" maxlength="16" placeholder="16 digit angka">
+          <div class="err-msg">NIK Ayah harus tepat 16 digit angka.</div>
+        </div>
+        <div class="field">
+          <label>Tahun Lahir Ayah<span class="req">*</span></label>
+          <input type="text" id="tahun_lahir_ayah" inputmode="numeric" maxlength="4" placeholder="Contoh: 1985" required>
+          <div class="err-msg">Tahun lahir harus 4 digit angka.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Pendidikan Ayah<span class="req">*</span></label>
+        <select id="pendidikan_ayah" required></select>
+        <div class="err-msg">Silakan pilih pendidikan Ayah.</div>
+      </div>
+
+      <div class="field">
+        <label>Pekerjaan Ayah<span class="req">*</span></label>
+        <select id="pekerjaan_ayah" required></select>
+        <div class="err-msg">Silakan pilih pekerjaan Ayah.</div>
+      </div>
+
+      <div class="field">
+        <label>Berkebutuhan Khusus Ayah</label>
+        <select id="kebutuhan_khusus_ayah"></select>
+      </div>
+
+      <div class="field">
+        <label>Penghasilan Ayah<span class="req">*</span></label>
+        <select id="penghasilan_ayah" required></select>
+        <div class="err-msg">Silakan pilih penghasilan Ayah.</div>
+      </div>
+    </section>
+
+    <!-- SECTION III: DATA IBU -->
+    <section class="card">
+      <div class="card-head"><span class="card-title">Data Ibu Kandung</span></div>
+
+      <div class="field">
+        <label>Status Ibu</label>
+        <div class="status-toggle" data-target="status_ibu">
+          <button type="button" data-value="Hidup" class="selected">Hidup</button>
+          <button type="button" data-value="Wafat">Wafat</button>
+        </div>
+        <input type="hidden" id="status_ibu" value="Hidup">
+      </div>
+
+      <div class="locked-note" id="ibuLockedNote">Karena status Ibu "Wafat", Pekerjaan otomatis diisi "Sudah Meninggal" dan Penghasilan otomatis diisi "Tidak Berpenghasilan".</div>
+
+      <div class="field">
+        <label>Nama Ibu<span class="req">*</span></label>
+        <input type="text" id="nama_ibu" required>
+        <div class="err-msg">Nama Ibu wajib diisi.</div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>NIK Ibu</label>
+          <input type="text" id="nik_ibu" inputmode="numeric" maxlength="16" placeholder="16 digit angka">
+          <div class="err-msg">NIK Ibu harus tepat 16 digit angka.</div>
+        </div>
+        <div class="field">
+          <label>Tahun Lahir Ibu<span class="req">*</span></label>
+          <input type="text" id="tahun_lahir_ibu" inputmode="numeric" maxlength="4" placeholder="Contoh: 1988" required>
+          <div class="err-msg">Tahun lahir harus 4 digit angka.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Pendidikan Ibu<span class="req">*</span></label>
+        <select id="pendidikan_ibu" required></select>
+        <div class="err-msg">Silakan pilih pendidikan Ibu.</div>
+      </div>
+
+      <div class="field">
+        <label>Pekerjaan Ibu<span class="req">*</span></label>
+        <select id="pekerjaan_ibu" required></select>
+        <div class="err-msg">Silakan pilih pekerjaan Ibu.</div>
+      </div>
+
+      <div class="field">
+        <label>Berkebutuhan Khusus Ibu</label>
+        <select id="kebutuhan_khusus_ibu"></select>
+      </div>
+
+      <div class="field">
+        <label>Penghasilan Ibu<span class="req">*</span></label>
+        <select id="penghasilan_ibu" required></select>
+        <div class="err-msg">Silakan pilih penghasilan Ibu.</div>
+      </div>
+    </section>
+
+    <!-- SECTION IV: DATA WALI -->
+    <section class="card">
+      <div class="card-head"><span class="card-title">Data Wali</span></div>
+
+      <div class="field">
+        <label>Mempunyai Wali</label>
+        <div class="status-toggle" data-target="punya_wali">
+          <button type="button" data-value="Tidak" class="selected">Tidak</button>
+          <button type="button" data-value="Iya">Iya</button>
+        </div>
+        <input type="hidden" id="punya_wali" value="Tidak">
+      </div>
+
+      <div class="wali-section" id="waliSection">
+        <div class="field">
+          <label>Nama Wali<span class="req">*</span></label>
+          <input type="text" id="nama_wali">
+          <div class="err-msg">Nama Wali wajib diisi.</div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>NIK Wali<span class="req">*</span></label>
+            <input type="text" id="nik_wali" inputmode="numeric" maxlength="16" placeholder="16 digit angka">
+            <div class="err-msg">NIK Wali harus tepat 16 digit angka.</div>
+          </div>
+          <div class="field">
+            <label>Tahun Lahir Wali<span class="req">*</span></label>
+            <input type="text" id="tahun_lahir_wali" inputmode="numeric" maxlength="4" placeholder="Contoh: 1980">
+            <div class="err-msg">Tahun lahir harus 4 digit angka.</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Pendidikan Wali<span class="req">*</span></label>
+          <select id="pendidikan_wali"></select>
+          <div class="err-msg">Silakan pilih pendidikan Wali.</div>
+        </div>
+
+        <div class="field">
+          <label>Pekerjaan Wali<span class="req">*</span></label>
+          <select id="pekerjaan_wali"></select>
+          <div class="err-msg">Silakan pilih pekerjaan Wali.</div>
+        </div>
+
+        <div class="field">
+          <label>Penghasilan Wali<span class="req">*</span></label>
+          <select id="penghasilan_wali"></select>
+          <div class="err-msg">Silakan pilih penghasilan Wali.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION V: KONTAK -->
+    <section class="card">
+      <div class="card-head"><span class="card-title">Kontak</span></div>
+
+      <div class="field">
+        <label>Nomor Telepon Rumah</label>
+        <input type="text" id="telp_rumah" inputmode="numeric" placeholder="Nomor telepon rumah (angka saja)">
+      </div>
+      <div class="field">
+        <label>Nomor HP</label>
+        <input type="text" id="no_hp" inputmode="numeric" placeholder="Nomor HP aktif (angka saja)">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="alamat@email.com">
+        <div class="err-msg">Format email tidak valid.</div>
+      </div>
+    </section>
+
+    <!-- SECTION: DATA PERIODIK -->
+    <section class="card">
+      <div class="card-head"><span class="card-title">Data Periodik</span></div>
+
+      <div class="field">
+        <label>Tinggi Badan (CM)<span class="req">*</span></label>
+        <input type="text" id="tinggi_badan" inputmode="numeric" maxlength="3" placeholder="Contoh: 140" required>
+        <div class="err-msg">Tinggi badan harus 3 digit angka.</div>
+      </div>
+
+      <div class="field">
+        <label>Berat Badan (Kg)<span class="req">*</span></label>
+        <input type="text" id="berat_badan" inputmode="numeric" maxlength="3" placeholder="Contoh: 35" required>
+        <div class="err-msg">Berat badan hanya boleh diisi angka, maksimal 3 digit.</div>
+      </div>
+
+      <div class="field">
+        <label>Lingkar Kepala</label>
+        <input type="text" id="lingkar_kepala" placeholder="Lingkar kepala (cm)">
+      </div>
+
+      <div class="field">
+        <label>Jarak Rumah ke Sekolah<span class="req">*</span></label>
+        <div class="status-toggle" data-target="jarak_rumah">
+          <button type="button" data-value="Kurang dari 1 KM" class="selected">Kurang dari 1 KM</button>
+          <button type="button" data-value="Lebih dari 1 KM">Lebih dari 1 KM</button>
+        </div>
+        <input type="hidden" id="jarak_rumah" value="Kurang dari 1 KM">
+      </div>
+
+      <div class="field" id="jarakKmField" style="display:none;">
+        <label>Sebutkan (dalam kilometer)<span class="req">*</span></label>
+        <input type="text" id="jarak_km" inputmode="numeric" placeholder="Jarak dalam kilometer (angka)" disabled>
+        <div class="err-msg">Jarak wajib diisi dengan angka.</div>
+      </div>
+
+      <div class="field">
+        <label>Waktu Tempuh ke Sekolah<span class="req">*</span></label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="text" id="waktu_tempuh_jam" inputmode="numeric" maxlength="2" placeholder="Jam" style="text-align:center;">
+          <span style="font-weight:700;color:var(--ink-soft);font-size:18px;">:</span>
+          <input type="text" id="waktu_tempuh_menit" inputmode="numeric" maxlength="2" placeholder="Menit" style="text-align:center;" required>
+        </div>
+        <div class="hint">Kolom Jam boleh dikosongkan jika hanya ingin mengisi Menit. Format Jam : Menit, contoh 0 : 30</div>
+        <div class="err-msg" id="waktuTempuhErr">Jam dan Menit wajib diisi dengan angka.</div>
+      </div>
+
+      <div class="field">
+        <label>Jumlah Saudara Kandung<span class="req">*</span></label>
+        <input type="text" id="jumlah_saudara" inputmode="numeric" placeholder="Jika tidak ada, isi dengan 0" required>
+        <div class="err-msg">Jumlah saudara kandung wajib diisi dengan angka.</div>
+      </div>
+    </section>
+
+    <div class="submit-bar">
+      <label class="confirm-check">
+        <input type="checkbox" id="confirmCheck">
+        <span>Data yang saya kirimkan sudah saya cek kembali dengan teliti dan saya pastikan benar</span>
+      </label>
+      <div class="err-msg" id="confirmErr">Anda harus mencentang kotak konfirmasi sebelum mengirim laporan.</div>
+      <button type="submit" class="submit-btn" id="submitBtn" disabled>Kirim Pendaftaran</button>
+    </div>
+  </form>
+
+  <div class="success-screen" id="successScreen">
+    <div class="icon">&#10003;</div>
+    <h2>Pendaftaran Berhasil Dikirim</h2>
+    <p>Terima kasih. Data pendaftaran telah tersimpan.<br>Silahkan download formulir yang telah anda isi.</p>
+    <button type="button" class="submit-btn download-btn" id="downloadFormBtn">Download Formulir</button>
+    <a class="link-beranda" id="linkDaftarLagi" href="#" target="_self">Isi formulir untuk pendaftar lain</a>
+  </div>
+
+  <!-- Ditampilkan bila pendaftaran sedang ditutup -->
+  <div class="success-screen" id="tutupScreen" style="display:none;">
+    <div class="icon icon-tutup">&#10005;</div>
+    <h2>Pendaftaran Ditutup</h2>
+    <div class="pesan-tutup" id="tutupPesan">Mohon maaf, pendaftaran sedang ditutup.</div>
+  </div>
+
+  <!-- Layar sementara selagi status pendaftaran diperiksa -->
+  <div class="success-screen" id="memuatScreen" style="display:block;">
+    <div class="spinner-form"></div>
+    <p style="margin-top:14px;">Memuat formulir&hellip;</p>
+  </div>
+
+  <div class="footer-note" id="footerNote">PANDAWA &middot; PENDAFTARAN DAN DATA WARGA BELAJAR</div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/form.js"></script>
+</body>
+</html>
