@@ -103,8 +103,18 @@ function debounce(fn, delay){
    ============================================================ */
 function terapkanTema(tema){
   document.documentElement.setAttribute("data-theme", tema);
-  el("#themeIcon use").setAttribute("href", tema === "dark" ? "#i-sun" : "#i-moon");
+  const ikon = (tema === "dark") ? "#i-sun" : "#i-moon";
+  // Ikon di topbar dashboard & di layar login
+  ["#themeIcon use", "#themeIconLogin use"].forEach(sel => {
+    const u = el(sel);
+    if(u) u.setAttribute("href", ikon);
+  });
   localStorage.setItem(LS.tema, tema);
+}
+
+function gantiTema(){
+  const sekarang = document.documentElement.getAttribute("data-theme");
+  terapkanTema(sekarang === "dark" ? "light" : "dark");
 }
 (function initTema(){
   const tersimpan = localStorage.getItem(LS.tema);
@@ -246,6 +256,7 @@ function keluar(){
   App.rombel = [];
   App.notif = { aktif:false, email_1:"", email_2:"" };
   App.wa = { aktif:false, token:"", nomor_1:"", nomor_2:"" };
+  if(App.pilihLulus) App.pilihLulus.clear();
   App.detailRow = null;
   App.registerRow = null;
 
@@ -301,10 +312,8 @@ function tutupSidebar(){ $("sidebar").classList.remove("open"); $("backdrop").cl
 $("menuBtn").addEventListener("click", bukaSidebar);
 $("backdrop").addEventListener("click", tutupSidebar);
 
-$("themeBtn").addEventListener("click", () => {
-  const sekarang = document.documentElement.getAttribute("data-theme");
-  terapkanTema(sekarang === "dark" ? "light" : "dark");
-});
+$("themeBtn").addEventListener("click", gantiTema);
+if($("themeBtnLogin")) $("themeBtnLogin").addEventListener("click", gantiTema);
 
 /* Sub-tab pengaturan */
 els(".subtab-btn").forEach(btn => {
@@ -548,7 +557,9 @@ function bukaMenuAksi(tombol, opsi){
       '<div class="sub">'+esc(row["Pendaftaran"] || "-")+
         (row["Rombel"] ? ' &middot; '+esc(row["Rombel"]) : "")+'</div>' +
     '</div>' +
-    '<button class="aksi-item" data-act="register"><span class="ic">'+icon("i-tag")+'</span> Register</button>' +
+    (tombol.dataset.mode === "lulus"
+      ? '<button class="aksi-item" data-act="batal_lulus"><span class="ic">'+icon("i-undo")+'</span> Batal Lulus</button>'
+      : '<button class="aksi-item" data-act="register"><span class="ic">'+icon("i-tag")+'</span> Register</button>') +
     '<button class="aksi-item" data-act="pdf"><span class="ic">'+icon("i-file")+'</span> Download Formulir</button>' +
     (adaHapus
       ? '<div class="aksi-sep"></div>' +
@@ -578,7 +589,8 @@ function bukaMenuAksi(tombol, opsi){
     item.addEventListener("click", () => {
       const aksi = item.dataset.act;
       tutupMenuAksi();
-      if(aksi === "register") bukaRegister(row, { lulusSaja: !!o.lulusSaja, adaLulus: adaLulus });
+      if(aksi === "batal_lulus") batalLulus([row]);
+      else if(aksi === "register") bukaRegister(row, { lulusSaja: !!o.lulusSaja, adaLulus: adaLulus });
       else if(aksi === "pdf") unduhPDFPeserta(row);
       else if(aksi === "hapus") hapusPeserta(row);
     });
@@ -913,14 +925,22 @@ function tampilkanPesertaRombel(wadah, namaRombelAktif, data, namaRombel, asing,
 $("searchRombel").addEventListener("input", debounce(renderRombel, 220));
 
 /* ---------- HALAMAN: PESERTA LULUS ---------- */
+/* Peserta lulus yang sedang dicentang — disimpan berdasarkan nomor baris sheet */
+App.pilihLulus = new Set();
+
 function renderLulus(){
   const q = $("searchLulus").value;
   const data = dataTerfilter().filter(d => sudahLulus(d) && cocokPencarian(d, q));
   const wadah = $("lulusContent");
 
+  // Buang pilihan yang sudah tidak ada di daftar (mis. baru saja dihapus)
+  const barisAda = new Set(data.map(d => d._row));
+  App.pilihLulus.forEach(r => { if(!barisAda.has(r)) App.pilihLulus.delete(r); });
+
   if(data.length === 0){
     wadah.innerHTML = kosongHTML(q ? "Tidak ada peserta yang cocok dengan pencarian."
       : "Belum ada peserta yang ditandai lulus.");
+    perbaruiBilahPilihan();
     return;
   }
 
@@ -931,25 +951,39 @@ function renderLulus(){
   });
   const tahunUrut = Object.keys(perTahun).sort((a,b) => b.localeCompare(a));
 
-  wadah.innerHTML = tahunUrut.map(t =>
-    '<div class="group">' +
-      '<div class="group-head">' +
-        '<span class="group-title">Lulus '+esc(t)+'</span>' +
-        '<span class="badge badge-green">'+perTahun[t].length+' peserta</span>' +
-        '<button class="btn btn-ghost btn-sm push lulus-xlsx" data-tahun="'+esc(t)+'">'+icon("i-download",14)+' Excel</button>' +
+  wadah.innerHTML =
+    // Bilah aksi massal — muncul saat ada yang dicentang
+    '<div class="bulk-bar" id="bulkBar">' +
+      '<span class="bulk-info"><strong id="bulkJumlah">0</strong> peserta dipilih</span>' +
+      '<div class="bulk-actions">' +
+        '<button class="btn btn-ghost btn-sm" id="bulkBatalPilih">Batal pilih</button>' +
+        '<button class="btn btn-ghost btn-sm" id="bulkBatalLulus">'+icon("i-undo",14)+' Batal Lulus</button>' +
+        '<button class="btn btn-danger btn-sm" id="bulkHapus">'+icon("i-trash",14)+' Hapus</button>' +
       '</div>' +
-      '<div class="table-wrap"><table><thead><tr>' +
-        '<th>Tanggal Lulus</th><th>Nama Lengkap</th><th>L/P</th><th>Paket</th><th>Rombel Terakhir</th><th></th>' +
-      '</tr></thead><tbody id="ll_'+slug(t)+'"></tbody></table></div>' +
-    '</div>'
-  ).join("");
+    '</div>' +
+    tahunUrut.map(t =>
+      '<div class="group">' +
+        '<div class="group-head">' +
+          '<span class="group-title">Lulus '+esc(t)+'</span>' +
+          '<span class="badge badge-green">'+perTahun[t].length+' peserta</span>' +
+          '<button class="btn btn-ghost btn-sm push lulus-xlsx" data-tahun="'+esc(t)+'">'+icon("i-download",14)+' Excel</button>' +
+        '</div>' +
+        '<div class="table-wrap"><table><thead><tr>' +
+          '<th class="col-cek"><input type="checkbox" class="cek cek-semua" data-tahun="'+esc(t)+'" aria-label="Pilih semua lulusan '+esc(t)+'"></th>' +
+          '<th>Tanggal Lulus</th><th>Nama Lengkap</th><th>L/P</th><th>Paket</th><th>Rombel Terakhir</th><th></th>' +
+        '</tr></thead><tbody id="ll_'+slug(t)+'"></tbody></table></div>' +
+      '</div>'
+    ).join("");
 
   tahunUrut.forEach(t => {
     const tb = $("ll_" + slug(t));
     if(!tb) return;
     tb.innerHTML = perTahun[t].map(d => {
       const i = App.pendaftar.indexOf(d);
-      return '<tr>' +
+      const terpilih = App.pilihLulus.has(d._row);
+      return '<tr class="'+(terpilih ? "row-pilih" : "")+'">' +
+        '<td class="col-cek"><input type="checkbox" class="cek cek-baris" data-row="'+d._row+'" data-tahun="'+esc(t)+'" '+
+          (terpilih ? "checked" : "")+' aria-label="Pilih '+esc(d["Nama Lengkap"])+'"></td>' +
         '<td>'+esc(d["Tanggal Lulus"])+'</td>' +
         '<td class="cell-name">'+esc(d["Nama Lengkap"])+'</td>' +
         '<td><span class="badge '+(d["Jenis Kelamin"]==="Perempuan"?"badge-pink":"badge-blue")+'">'+
@@ -959,12 +993,43 @@ function renderLulus(){
         '<td><div class="action-cell">' +
           '<button class="btn btn-ghost btn-sm act-detail" data-i="'+i+'">Detail</button>' +
           '<button class="btn btn-ghost btn-sm act-menu" data-i="'+i+'" aria-haspopup="true" aria-expanded="false" ' +
-            'data-hapus="0" data-lulus="1">Aksi '+icon("i-chev",13)+'</button>' +
+            'data-mode="lulus" data-hapus="1" data-lulus="1">Aksi '+icon("i-chev",13)+'</button>' +
         '</div></td>' +
       '</tr>';
     }).join("");
     pasangEventBaris(tb, { lulusSaja:true });
   });
+
+  // ---- Centang per baris ----
+  els(".cek-baris", wadah).forEach(cb => {
+    cb.addEventListener("change", () => {
+      const r = +cb.dataset.row;
+      if(cb.checked) App.pilihLulus.add(r); else App.pilihLulus.delete(r);
+      cb.closest("tr").classList.toggle("row-pilih", cb.checked);
+      sinkronCentangGrup(cb.dataset.tahun);
+      perbaruiBilahPilihan();
+    });
+  });
+
+  // ---- Centang semua dalam satu tahun ----
+  els(".cek-semua", wadah).forEach(cb => {
+    cb.addEventListener("change", () => {
+      const t = cb.dataset.tahun;
+      els('.cek-baris[data-tahun="'+t+'"]', wadah).forEach(b => {
+        b.checked = cb.checked;
+        const r = +b.dataset.row;
+        if(cb.checked) App.pilihLulus.add(r); else App.pilihLulus.delete(r);
+        b.closest("tr").classList.toggle("row-pilih", cb.checked);
+      });
+      perbaruiBilahPilihan();
+    });
+    sinkronCentangGrup(cb.dataset.tahun);
+  });
+
+  // ---- Aksi massal ----
+  $("bulkBatalPilih").addEventListener("click", () => { App.pilihLulus.clear(); renderLulus(); });
+  $("bulkBatalLulus").addEventListener("click", () => batalLulus(ambilPilihanLulus()));
+  $("bulkHapus").addEventListener("click", () => hapusLulusBanyak(ambilPilihanLulus()));
 
   els(".lulus-xlsx", wadah).forEach(b => {
     b.addEventListener("click", () => {
@@ -972,6 +1037,114 @@ function renderLulus(){
       unduhExcel(perTahun[t], "Peserta_Lulus_" + slug(t), "Lulus " + t);
     });
   });
+
+  perbaruiBilahPilihan();
+}
+
+/** Status centang "pilih semua" mengikuti isi grup: penuh / sebagian / kosong */
+function sinkronCentangGrup(tahun){
+  const wadah = $("lulusContent");
+  const semua = el('.cek-semua[data-tahun="'+tahun+'"]', wadah);
+  if(!semua) return;
+  const baris = els('.cek-baris[data-tahun="'+tahun+'"]', wadah);
+  const dicentang = baris.filter(b => b.checked).length;
+  semua.checked = baris.length > 0 && dicentang === baris.length;
+  semua.indeterminate = dicentang > 0 && dicentang < baris.length;
+}
+
+function perbaruiBilahPilihan(){
+  const bar = $("bulkBar");
+  if(!bar) return;
+  const n = App.pilihLulus.size;
+  bar.classList.toggle("show", n > 0);
+  $("bulkJumlah").textContent = n;
+}
+
+function ambilPilihanLulus(){
+  return App.pendaftar.filter(d => App.pilihLulus.has(d._row));
+}
+
+/**
+ * BATAL LULUS — kosongkan Tanggal Lulus.
+ * Kolom Rombel tidak pernah dihapus saat peserta ditandai lulus, jadi begitu
+ * Tanggal Lulus dikosongkan, peserta otomatis kembali ke rombel sebelumnya.
+ */
+function batalLulus(rows){
+  if(!rows || rows.length === 0) return;
+
+  const pesanKonfirmasi = rows.length === 1
+    ? 'Batalkan kelulusan "' + (rows[0]["Nama Lengkap"] || "peserta ini") + '"?\n\n' +
+      'Peserta akan kembali ke rombel ' + (rows[0]["Rombel"] ? '"' + rows[0]["Rombel"] + '"' : 'sebelumnya') + '.'
+    : 'Batalkan kelulusan ' + rows.length + ' peserta terpilih?\n\n' +
+      'Semuanya akan kembali ke rombel masing-masing.';
+  if(!confirm(pesanKonfirmasi)) return;
+
+  // Optimistic UI: ubah dulu di layar, sinkron di belakang
+  const cadangan = rows.map(r => ({ row: r, nilai: r["Tanggal Lulus"] }));
+  rows.forEach(r => { r["Tanggal Lulus"] = ""; App.pilihLulus.delete(r._row); });
+  renderSemua();
+  toast(rows.length === 1 ? "Kelulusan dibatalkan." : rows.length + " kelulusan dibatalkan.", "ok");
+
+  syncMulai();
+  API.kirim({
+      action: "update_field_banyak",
+      username: App.username,
+      password: App.password,
+      rows: rows.map(r => r._row),
+      field: "Tanggal Lulus",
+      value: ""
+    })
+    .then(res => {
+      syncSelesai();
+      if(!res || !res.ok){
+        cadangan.forEach(c => { c.row["Tanggal Lulus"] = c.nilai; });   // kembalikan
+        renderSemua();
+        toast((res && res.message) || "Gagal membatalkan kelulusan.", "err");
+      }
+    })
+    .catch(err => {
+      syncSelesai();
+      cadangan.forEach(c => { c.row["Tanggal Lulus"] = c.nilai; });
+      renderSemua();
+      toast("Gagal tersimpan: " + err.message, "err");
+    });
+}
+
+/** Hapus banyak peserta lulus sekaligus (PERMANEN) */
+function hapusLulusBanyak(rows){
+  if(!rows || rows.length === 0) return;
+  const daftarNama = rows.slice(0, 5).map(r => "• " + (r["Nama Lengkap"] || "-")).join("\n") +
+    (rows.length > 5 ? "\n• …dan " + (rows.length - 5) + " lainnya" : "");
+
+  if(!confirm("Hapus " + rows.length + " data peserta secara PERMANEN?\n\n" + daftarNama +
+              "\n\nData akan terhapus dari spreadsheet dan tidak bisa dikembalikan.")) return;
+
+  const btn = $("bulkHapus");
+  if(btn){ btn.disabled = true; btn.textContent = "Menghapus…"; }
+
+  syncMulai();
+  API.kirim({
+      action: "hapus_peserta_banyak",
+      username: App.username,
+      password: App.password,
+      rows: rows.map(r => r._row)
+    })
+    .then(res => {
+      syncSelesai();
+      if(res && res.ok){
+        App.pilihLulus.clear();
+        toast(res.terhapus + " data peserta dihapus.", "ok");
+        muatUlang(true);   // nomor baris bergeser setelah penghapusan -> ambil ulang
+      } else {
+        if(btn){ btn.disabled = false; btn.innerHTML = icon("i-trash",14) + " Hapus"; }
+        toast((res && res.message) || "Gagal menghapus data.", "err");
+      }
+    })
+    .catch(err => {
+      syncSelesai();
+      if(btn){ btn.disabled = false; btn.innerHTML = icon("i-trash",14) + " Hapus"; }
+      toast("Gagal menghapus: " + err.message, "err");
+    });
 }
 $("searchLulus").addEventListener("input", debounce(renderLulus, 220));
 
@@ -1346,7 +1519,98 @@ function tampilkanTautanPendaftaran(){
   const link = tautanPendaftaran();
   if($("linkPendaftaran")) $("linkPendaftaran").value = link || "(belum tersedia)";
   if($("bukaFormulirBtn")) $("bukaFormulirBtn").href = link || "#";
+  buatQrCode(link);
 }
+
+/* ---------- QR Code tautan pendaftaran ---------- */
+function buatQrCode(link){
+  const wadah = $("qrCanvas");
+  if(!wadah) return;
+  wadah.innerHTML = "";
+  if(!link){ wadah.innerHTML = '<span class="hint">Tautan belum tersedia</span>'; return; }
+  if(typeof QRCode === "undefined"){
+    wadah.innerHTML = '<span class="hint">Pustaka QR gagal dimuat</span>';
+    return;
+  }
+  // Dibuat besar (512px) agar tajam saat diunduh/dicetak; tampilan diperkecil lewat CSS
+  new QRCode(wadah, {
+    text: link,
+    width: 512,
+    height: 512,
+    colorDark: "#1A1633",
+    colorLight: "#FFFFFF",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+/** Unduh QR sebagai gambar PNG siap cetak, lengkap dengan judul & nama sekolah */
+function unduhQrCode(){
+  const sumber = el("#qrCanvas canvas");
+  const link = tautanPendaftaran();
+  if(!sumber || !link){ toast("QR Code belum tersedia.", "err"); return; }
+
+  const nama = App.settings.nama_sekolah || "PANDAWA";
+  const tahun = App.settings.tahun_ajaran ? "Tahun Ajaran " + App.settings.tahun_ajaran : "";
+
+  const L = 1000, T = 1300;               // ukuran poster
+  const c = document.createElement("canvas");
+  c.width = L; c.height = T;
+  const g = c.getContext("2d");
+
+  // Latar
+  g.fillStyle = "#FFFFFF";
+  g.fillRect(0, 0, L, T);
+
+  // Pita atas
+  g.fillStyle = "#6941E0";
+  g.fillRect(0, 0, L, 170);
+
+  g.textAlign = "center";
+  g.fillStyle = "#FFFFFF";
+  g.font = "700 30px Arial, sans-serif";
+  g.fillText("FORMULIR PENDAFTARAN", L/2, 72);
+  g.font = "800 44px Arial, sans-serif";
+  g.fillText(potongTeks(g, nama.toUpperCase(), L - 120), L/2, 130);
+
+  // QR
+  const ukuranQr = 720;
+  const xQr = (L - ukuranQr) / 2, yQr = 240;
+  g.fillStyle = "#FFFFFF";
+  g.fillRect(xQr - 30, yQr - 30, ukuranQr + 60, ukuranQr + 60);
+  g.strokeStyle = "#ECEAF5"; g.lineWidth = 4;
+  g.strokeRect(xQr - 30, yQr - 30, ukuranQr + 60, ukuranQr + 60);
+  g.imageSmoothingEnabled = false;         // jaga tepi QR tetap tajam
+  g.drawImage(sumber, xQr, yQr, ukuranQr, ukuranQr);
+
+  // Keterangan
+  g.fillStyle = "#1A1633";
+  g.font = "800 46px Arial, sans-serif";
+  g.fillText("Pindai untuk Mendaftar", L/2, yQr + ukuranQr + 110);
+  if(tahun){
+    g.fillStyle = "#6B6785";
+    g.font = "600 30px Arial, sans-serif";
+    g.fillText(tahun, L/2, yQr + ukuranQr + 160);
+  }
+  g.fillStyle = "#6941E0";
+  g.font = "600 24px Arial, sans-serif";
+  g.fillText(potongTeks(g, link, L - 100), L/2, T - 60);
+
+  const a = document.createElement("a");
+  a.download = "QR_Pendaftaran_" + nama.replace(/[^a-zA-Z0-9]+/g, "_") + ".png";
+  a.href = c.toDataURL("image/png");
+  a.click();
+  toast("QR Code diunduh.", "ok");
+}
+
+/** Potong teks panjang agar muat dalam lebar tertentu */
+function potongTeks(g, teks, lebarMaks){
+  if(g.measureText(teks).width <= lebarMaks) return teks;
+  let t = teks;
+  while(t.length > 3 && g.measureText(t + "…").width > lebarMaks) t = t.slice(0, -1);
+  return t + "…";
+}
+
+if($("downloadQrBtn")) $("downloadQrBtn").addEventListener("click", unduhQrCode);
 
 function isiFormPengaturan(){
   const s = App.settings;

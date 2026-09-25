@@ -267,7 +267,7 @@ a{color:var(--primary-text);}
   display:block;font-size:12.5px;font-weight:600;
   color:var(--text-muted);margin-bottom:6px;
 }
-.input, input[type=text],input[type=password],input[type=date],input[type=number],select,textarea{
+.input, input[type=text],input[type=password],input[type=date],input[type=number],input[type=email],input[type=tel],input[type=url],select,textarea{
   width:100%;padding:11px 14px;
   font-family:inherit;font-size:14px;
   color:var(--text);background:var(--surface-2);
@@ -448,6 +448,7 @@ input[type=file]{padding:9px 12px;font-size:12.5px;}
 
 /* Kartu Paket pada menu Rombel (dapat diklik) */
 .paket-card{
+  color:var(--text);
   background:var(--surface);
   border-radius:var(--radius-lg);
   padding:var(--sp-5);
@@ -471,7 +472,7 @@ input[type=file]{padding:9px 12px;font-size:12.5px;}
 .stat-icon.pink{background:var(--pink-50);color:var(--pink-500);}
 .stat-icon.teal{background:var(--teal-50);color:var(--teal-500);}
 .stat-label{font-size:12.5px;color:var(--text-muted);font-weight:600;}
-.stat-value{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.15;}
+.stat-value{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:var(--text);}
 
 .grid-2{display:grid;gap:var(--sp-4);grid-template-columns:repeat(auto-fit,minmax(290px,1fr));}
 
@@ -751,6 +752,65 @@ tr.row-kendala:hover td{background:color-mix(in srgb,var(--red-50) 75%, var(--re
 .file-pick input[type=file]{
   position:absolute;inset:0;opacity:0;cursor:pointer;
   width:100%;height:100%;min-height:0;padding:0;
+}
+
+/* ---- Bagikan Formulir + QR ---- */
+.share-grid{display:flex;gap:var(--sp-5);align-items:flex-start;}
+.qr-box{
+  flex-shrink:0;
+  padding:var(--sp-3);
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  text-align:center;
+  box-shadow:var(--shadow-sm);
+}
+.qr-canvas{width:148px;height:148px;display:flex;align-items:center;justify-content:center;}
+.qr-canvas img{width:148px !important;height:148px !important;}
+/* Canvas tetap ada (dipakai untuk unduhan), tapi yang ditampilkan cukup gambarnya */
+.qr-canvas canvas{display:none !important;}
+.qr-caption{font-size:11px;font-weight:700;color:#1A1633;margin-top:8px;letter-spacing:.02em;}
+.share-info{flex:1;min-width:0;}
+.share-label{display:block;font-size:12.5px;font-weight:600;color:var(--text-muted);margin-bottom:6px;}
+
+@media (max-width:560px){
+  .share-grid{flex-direction:column;align-items:center;}
+  .share-info{width:100%;}
+}
+
+/* Tombol tema melayang di layar login */
+.login-wrap{position:relative;}
+.theme-float{position:absolute;top:var(--sp-5);right:var(--sp-5);}
+
+/* ---- Peserta Lulus: pilih banyak ---- */
+.col-cek{width:44px;padding-right:0 !important;}
+.cek{
+  width:18px;height:18px;min-height:0;padding:0;margin:0;
+  accent-color:var(--primary);cursor:pointer;vertical-align:middle;
+}
+tr.row-pilih td{background:var(--primary-soft) !important;}
+
+.bulk-bar{
+  display:none;
+  position:sticky;top:72px;z-index:20;
+  align-items:center;justify-content:space-between;gap:var(--sp-3);flex-wrap:wrap;
+  margin-bottom:var(--sp-4);
+  padding:10px 12px 10px 16px;
+  background:var(--surface);
+  border:1.5px solid var(--primary);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-lg);
+  animation:menuIn 180ms cubic-bezier(.4,0,.2,1);
+}
+.bulk-bar.show{display:flex;}
+.bulk-info{font-size:13.5px;color:var(--text-muted);}
+.bulk-info strong{color:var(--primary-text);font-size:15px;}
+.bulk-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+@media (max-width:640px){
+  .bulk-bar{top:64px;}
+  .bulk-actions{width:100%;}
+  .bulk-actions .btn{flex:1;}
 }
 
 /* Kotak tautan */
