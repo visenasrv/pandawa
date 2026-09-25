@@ -320,7 +320,25 @@ Agar tombol pada email notifikasi mengarah ke alamat yang benar:
 4. Simpan → **Deploy** → **Manage deployments** → pensil →
    **New version** → **Deploy**.
 
-## D.4 — Periksa semuanya berjalan
+## D.4 — (Opsional) Notifikasi WhatsApp
+
+Kalau ingin mendapat pesan WhatsApp setiap ada pendaftar baru:
+
+1. Daftar di **fonnte.com**, buat **Device**, lalu **hubungkan nomor
+   WhatsApp** dengan memindai QR (seperti WhatsApp Web).
+2. Salin **Token** perangkat tersebut.
+3. Di admin PANDAWA: **Pengaturan** → kartu **Notifikasi WhatsApp**
+   → tempel token, isi 1–2 nomor tujuan, nyalakan sakelar → **Simpan**.
+4. Klik **Kirim Uji Coba** untuk memastikan pesannya sampai.
+
+> Nomor boleh ditulis `08123456789` maupun `628123456789` — keduanya
+> otomatis dirapikan sistem.
+
+> Fonnte adalah layanan pihak ketiga berbayar (ada paket gratis
+> terbatas). Nomor WhatsApp yang dihubungkan harus tetap aktif dan
+> tersambung di dashboard Fonnte, kalau tidak pesan tidak akan terkirim.
+
+## D.5 — Periksa semuanya berjalan
 
 - [ ] Buka alamat formulir — tampilan berwarna, tidak polos
 - [ ] Status pendaftaran termuat (formulir muncul / pesan ditutup)

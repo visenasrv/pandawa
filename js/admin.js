@@ -10,6 +10,7 @@ const App = {
   rombel: [],
   settings: { nama_sekolah:"", jenis_satuan:"", tahun_ajaran:"", logo_url:"" },
   notif: { aktif:false, email_1:"", email_2:"" },
+  wa: { aktif:false, token:"", nomor_1:"", nomor_2:"" },
   tahunTerpilih: new Set(),
   halaman: "dashboard",
   paketRombel: null,
@@ -172,6 +173,7 @@ function login(username, password){
 function simpanDataAwal(res){
   App.settings  = res.settings || App.settings;
   App.notif     = res.notif || App.notif;
+  App.wa        = res.wa || App.wa;
   App.pendaftar = res.pendaftar || [];
   App.rombel    = res.rombel || [];
 
@@ -243,6 +245,7 @@ function keluar(){
   App.pendaftar = [];
   App.rombel = [];
   App.notif = { aktif:false, email_1:"", email_2:"" };
+  App.wa = { aktif:false, token:"", nomor_1:"", nomor_2:"" };
   App.detailRow = null;
   App.registerRow = null;
 
@@ -1356,6 +1359,7 @@ function isiFormPengaturan(){
   perbaruiLabelStatus();
   tampilkanTautanPendaftaran();
   isiFormNotif();
+  isiFormWa();
   $("userName").textContent = App.username || "Administrator";
   tampilkanLogo(s.logo_url || "");
 }
@@ -1404,6 +1408,96 @@ $("saveStatusBtn").addEventListener("click", () => {
     .catch(err => {
       btn.disabled = false; btn.textContent = "Simpan Status";
       pesan("msgStatus", "Gagal: " + err.message, "err");
+    });
+});
+
+/* ---------- Notifikasi WhatsApp (Fonnte) ---------- */
+function isiFormWa(){
+  $("switchWa").checked = !!App.wa.aktif;
+  $("inputWaToken").value = App.wa.token || "";
+  $("inputWaNomor1").value = App.wa.nomor_1 || "";
+  $("inputWaNomor2").value = App.wa.nomor_2 || "";
+  perbaruiLabelWa();
+}
+
+function perbaruiLabelWa(){
+  const aktif = $("switchWa").checked;
+  const label = $("waLabel");
+  label.textContent = aktif ? "WhatsApp AKTIF" : "WhatsApp NONAKTIF";
+  label.className = "status-label " + (aktif ? "buka" : "tutup");
+  $("waKet").textContent = aktif
+    ? "Pesan dikirim otomatis setiap ada pendaftar baru."
+    : "Tidak ada pesan WhatsApp yang dikirim.";
+}
+$("switchWa").addEventListener("change", perbaruiLabelWa);
+
+/** Nomor dianggap valid bila 10-15 digit setelah dirapikan ke awalan 62 */
+function nomorValid(n){
+  let d = String(n).replace(/[^0-9]/g, "");
+  if(!d) return false;
+  if(d.indexOf("0") === 0) d = "62" + d.substring(1);
+  else if(d.indexOf("62") !== 0) d = "62" + d;
+  return d.length >= 10 && d.length <= 15;
+}
+
+$("saveWaBtn").addEventListener("click", () => {
+  const aktif = $("switchWa").checked;
+  const token = $("inputWaToken").value.trim();
+  const n1 = $("inputWaNomor1").value.trim();
+  const n2 = $("inputWaNomor2").value.trim();
+
+  if(n1 && !nomorValid(n1)){ pesan("msgWa", "Nomor WhatsApp 1 tidak valid.", "err"); return; }
+  if(n2 && !nomorValid(n2)){ pesan("msgWa", "Nomor WhatsApp 2 tidak valid.", "err"); return; }
+  if(aktif && !token){ pesan("msgWa", "Token Fonnte wajib diisi untuk mengaktifkan.", "err"); return; }
+  if(aktif && !n1 && !n2){ pesan("msgWa", "Isi minimal satu nomor WhatsApp.", "err"); return; }
+
+  const btn = $("saveWaBtn");
+  btn.disabled = true; btn.textContent = "Menyimpan…";
+
+  API.kirim({
+      action: "simpan_wa",
+      username: App.username,
+      password: App.password,
+      aktif: aktif,
+      token: token,
+      nomor_1: n1,
+      nomor_2: n2
+    })
+    .then(res => {
+      btn.disabled = false; btn.textContent = "Simpan";
+      if(res && res.ok){
+        App.wa = res.wa || { aktif, token, nomor_1:n1, nomor_2:n2 };
+        pesan("msgWa", aktif ? "Notifikasi WhatsApp diaktifkan." : "Pengaturan WhatsApp disimpan.", "ok");
+        toast("Notifikasi WhatsApp disimpan.", "ok");
+      } else {
+        pesan("msgWa", (res && res.message) || "Gagal menyimpan.", "err");
+      }
+    })
+    .catch(err => {
+      btn.disabled = false; btn.textContent = "Simpan";
+      pesan("msgWa", "Gagal: " + err.message, "err");
+    });
+});
+
+$("testWaBtn").addEventListener("click", () => {
+  const btn = $("testWaBtn");
+  btn.disabled = true; btn.textContent = "Mengirim…";
+  pesanReset("msgWa");
+
+  API.kirim({ action: "wa_uji", username: App.username, password: App.password })
+    .then(res => {
+      btn.disabled = false; btn.textContent = "Kirim Uji Coba";
+      if(res && res.ok){
+        pesan("msgWa", "Pesan uji coba terkirim ke: " + res.nomor.join(", ") +
+          ". Periksa WhatsApp nomor tersebut.", "ok");
+        toast("WhatsApp uji coba terkirim.", "ok");
+      } else {
+        pesan("msgWa", (res && res.message) || "Gagal mengirim pesan uji coba.", "err");
+      }
+    })
+    .catch(err => {
+      btn.disabled = false; btn.textContent = "Kirim Uji Coba";
+      pesan("msgWa", "Gagal: " + err.message, "err");
     });
 });
 
